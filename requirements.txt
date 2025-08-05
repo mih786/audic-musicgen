@@ -1,0 +1,7 @@
+modal>=0.56.0
+requests>=2.31.0
+transformers>=4.35.0
+torch>=2.0.0
+scipy>=1.11.0
+fastapi>=0.104.0
+uvicorn>=0.24.0 
