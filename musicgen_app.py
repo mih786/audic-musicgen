@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Create Modal app
-app = modal.App("musicgen-demo")
+app = modal.App("audic-musicgen")
 
 # Define the image with required dependencies
 image = modal.Image.from_registry("python:3.11-slim").apt_install("git", "gcc", "ffmpeg").pip_install([
@@ -43,7 +43,7 @@ def validate_environment():
 model_cache = modal.Volume.from_name("model-cache", create_if_missing=True)
 
 @app.function(image=image, gpu="A10G", timeout=600, volumes={"/cache_volume": model_cache}, secrets=[modal.Secret.from_name("aws-credentials"), modal.Secret.from_name("huggingface-token")])
-def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -> Dict[str, Any]:
+def generate_music(prompt: str, duration: int = 30, model_size: str = "large", message_deduplication_id: str = None) -> Dict[str, Any]:
     """
     Generate music using MusicGen model
     
@@ -51,6 +51,7 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -
         prompt: Text description of the music to generate
         duration: Duration in seconds (1-300)
         model_size: Model size - "small", "medium", "large", "melody" (default: "large" for best quality)
+        message_deduplication_id: Optional message deduplication ID for unique S3 file naming
     """
     try:
         # Validate environment variables
@@ -115,9 +116,15 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -
         sampling_rate = model.sample_rate
         print(f"✅ Music generated successfully! Sample rate: {sampling_rate}Hz")
         
-        # Save the file using the recommended audio_write function
+        # Save the file using the recommended audio_write function with message_deduplication_id
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"generated_music_{timestamp}"
+        
+        if message_deduplication_id:
+            filename = f"musicgen_{message_deduplication_id}_{timestamp}"
+            print(f"📁 Using message_deduplication_id for filename: {message_deduplication_id}")
+        else:
+            filename = f"generated_music_{timestamp}"
+            print("⚠️  No message_deduplication_id provided, using default filename pattern")
         
         # Use audio_write as recommended in the documentation
         # Convert to tensor if it's a numpy array
@@ -152,7 +159,12 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -
             )
             
             bucket_name = os.getenv('S3_BUCKET_NAME', 'audiogen-demo')
-            s3_key = f"audio/{wav_filename}"
+            
+            # Organize S3 structure with message_deduplication_id
+            if message_deduplication_id:
+                s3_key = f"musicgen/{message_deduplication_id}/{wav_filename}"
+            else:
+                s3_key = f"audio/{wav_filename}"
             
             s3_client.upload_file(wav_filename, bucket_name, s3_key)
             
@@ -173,7 +185,8 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -
                 "s3_bucket": bucket_name,
                 "s3_key": s3_key,
                 "prompt_used": prompt,
-                "model_size": model_size
+                "model_size": model_size,
+                "message_deduplication_id": message_deduplication_id
             }
             
         except Exception as s3_error:
@@ -188,7 +201,8 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -
                 "filename": wav_filename,
                 "file_size_bytes": len(audio_bytes),
                 "prompt_used": prompt,
-                "model_size": model_size
+                "model_size": model_size,
+                "message_deduplication_id": message_deduplication_id
             }
         
     except Exception as e:
@@ -196,7 +210,7 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large") -
         return {"error": str(e)}
 
 @app.function(image=image, gpu="A10G", timeout=600, volumes={"/cache_volume": model_cache}, secrets=[modal.Secret.from_name("aws-credentials"), modal.Secret.from_name("huggingface-token")])
-def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30) -> Dict[str, Any]:
+def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30, message_deduplication_id: str = None) -> Dict[str, Any]:
     """
     Generate music using MusicGen Melody model with a reference melody
     
@@ -204,6 +218,7 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
         prompt: Text description of the music to generate
         melody_path: Path to reference melody audio file
         duration: Duration in seconds (1-300)
+        message_deduplication_id: Optional message deduplication ID for unique S3 file naming
     """
     try:
         # Validate environment variables
@@ -269,9 +284,15 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
         sampling_rate = model.sample_rate
         print(f"✅ Music with melody generated successfully! Sample rate: {sampling_rate}Hz")
         
-        # Save the file using the recommended audio_write function
+        # Save the file using the recommended audio_write function with message_deduplication_id
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"generated_music_melody_{timestamp}"
+        
+        if message_deduplication_id:
+            filename = f"musicgen_melody_{message_deduplication_id}_{timestamp}"
+            print(f"📁 Using message_deduplication_id for melody filename: {message_deduplication_id}")
+        else:
+            filename = f"generated_music_melody_{timestamp}"
+            print("⚠️  No message_deduplication_id provided for melody, using default filename pattern")
         
         # Use audio_write as recommended in the documentation
         # Convert to tensor if it's a numpy array
@@ -306,7 +327,12 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
             )
             
             bucket_name = os.getenv('S3_BUCKET_NAME', 'audiogen-demo')
-            s3_key = f"audio/{wav_filename}"
+            
+            # Organize S3 structure with message_deduplication_id
+            if message_deduplication_id:
+                s3_key = f"musicgen/{message_deduplication_id}/{wav_filename}"
+            else:
+                s3_key = f"audio/{wav_filename}"
             
             s3_client.upload_file(wav_filename, bucket_name, s3_key)
             
@@ -328,7 +354,8 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
                 "s3_key": s3_key,
                 "prompt_used": prompt,
                 "model_size": "melody",
-                "melody_path": melody_path
+                "melody_path": melody_path,
+                "message_deduplication_id": message_deduplication_id
             }
             
         except Exception as s3_error:
@@ -344,7 +371,8 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
                 "file_size_bytes": len(audio_bytes),
                 "prompt_used": prompt,
                 "model_size": "melody",
-                "melody_path": melody_path
+                "melody_path": melody_path,
+                "message_deduplication_id": message_deduplication_id
             }
         
     except Exception as e:
