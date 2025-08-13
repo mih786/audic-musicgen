@@ -1,190 +1,154 @@
-# AudioGen Demo - Modal Serverless App
+# MusicGen - Modal Serverless App
 
-This is a serverless Modal app that demonstrates AI-powered audio generation for fitness advertisements using AudioCraft/AudioGen models.
+This is a serverless Modal app that demonstrates AI-powered music generation using Facebook's MusicGen model from AudioCraft.
 
-## Features
+## 🎵 Features
 
-- 🎵 **Local Audio Generation**: Uses Facebook's AudioGen model for local audio generation
-- 🌐 **S3 Integration**: Automatic upload to S3 for easy file management
-- 🏃 **Fitness Ad Templates**: Pre-built prompts for fitness advertisement audio
-- 🔧 **Custom Prompts**: Generate audio from any text prompt
-- ⚡ **Serverless**: Runs on Modal's serverless infrastructure with GPU acceleration
+- 🎵 **AI Music Generation**: Uses Facebook's MusicGen model for high-quality music generation
+- 🚀 **Serverless Deployment**: Deployed on Modal for scalable, on-demand music generation
+- ☁️ **S3 Integration**: Automatically uploads generated music to AWS S3
+- 🎛️ **Multiple Model Sizes**: Support for small, medium, large, and melody models
+- ⏱️ **Flexible Duration**: Generate music from 1-300 seconds
+- 🔧 **Easy Configuration**: Simple setup with environment variables
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
 
-```bash
-pip install modal python-dotenv boto3 requests
-```
+- Modal account and CLI installed
+- AWS account with S3 bucket
+- Python 3.11+
 
-### 2. Setup AWS Credentials & Modal Secrets
-
-```bash
-python3 setup_modal_secrets.py
-```
-
-### 3. Deploy the App
+### 1. Clone and Setup
 
 ```bash
-modal deploy modal_app.py
+git clone <repository-url>
+cd audic-musicgen
+pip install -r requirements.txt
 ```
 
-### 4. Generate Audio
+### 2. Configure Environment Variables
+
+Create a `.env` file:
 
 ```bash
-python3 generate_audio.py
-```
-
-## Usage
-
-### Generate Audio (Main Function)
-
-```bash
-modal run modal_app.py::generate_sfx --prompt "your audio description" --duration 60
-```
-
-### Test the App
-
-```bash
-# Simple test
-modal run modal_app.py::simple_test
-
-# Health check
-modal run modal_app.py::health_check
-```
-
-### Test Multiple Prompts
-
-```bash
-python3 test_prompts.py
-```
-
-This will test:
-1. Simple function
-2. Health check
-3. Default fitness ad prompt
-4. Electronic music
-5. Nature sounds
-6. Rock music
-7. Ambient music
-
-### Examples
-
-```bash
-# Fitness ad audio
-modal run modal_app.py::generate_sfx --prompt "upbeat motivational fitness music" --duration 30
-
-# Nature sounds
-modal run modal_app.py::generate_sfx --prompt "peaceful nature sounds with birds and water" --duration 45
-
-# Any custom audio
-modal run modal_app.py::generate_sfx --prompt "your custom prompt here" --duration 60
-```
-
-## File Structure
-
-```
-audic-audiogen/
-├── modal_app.py              # Main Modal app with AudioGen
-├── test_modal.py            # Test script for Modal app
-├── test_prompts.py          # Test different prompts
-├── setup_modal_secrets.py   # Complete setup script
-├── .env                     # AWS credentials (created by setup)
-├── README.md                # This file
-└── requirements.txt         # Python dependencies
-```
-
-## Environment Variables & Secrets
-
-### Option 1: Local .env File (Development)
-The `.env` file contains:
-
-```env
-# AWS Credentials
-AWS_ACCESS_KEY_ID=your_aws_access_key_here
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=us-east-1
-
-# S3 Configuration
-S3_BUCKET_NAME=audiogen-demo
-
-# Hugging Face Token (optional)
-HUGGING_FACE_TOKEN=your_hugging_face_token_here
+S3_BUCKET_NAME=audic-musicgen
+HUGGING_FACE_TOKEN=your_hf_token  # Optional
 ```
 
-### Option 2: Modal Secrets (Production - Recommended)
-For production, use Modal secrets for better security:
+### 3. Deploy to Modal
 
 ```bash
-# Create secrets from .env file
-python3 setup_modal_secrets.py
+modal deploy musicgen_app.py
+```
 
-# Or manually create secrets
-modal secret create aws-credentials AWS_ACCESS_KEY_ID=your_key AWS_SECRET_ACCESS_KEY=your_secret AWS_REGION=us-east-1 S3_BUCKET_NAME=audiogen-demo
+### 4. Generate Music
+
+```bash
+modal run musicgen_app.py::generate_music \
+  --prompt "Energetic electronic dance music with heavy bass and synthesizers" \
+  --duration 30 \
+  --model-size large
+```
+
+## 📁 Project Structure
+
+```
+audic-musicgen/
+├── musicgen_app.py           # Main Modal app with MusicGen
+├── test_musicgen.py          # Test script for MusicGen
+├── requirements.txt          # Python dependencies
+├── README.md                 # This file
+└── .gitignore               # Git ignore file
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+- `AWS_ACCESS_KEY_ID`: Your AWS access key
+- `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
+- `AWS_REGION`: AWS region (default: us-east-1)
+- `S3_BUCKET_NAME`: S3 bucket for storing generated music
+- `HUGGING_FACE_TOKEN`: Hugging Face token (optional, for private models)
+
+### Modal Secrets Setup
+
+```bash
+modal secret create aws-credentials AWS_ACCESS_KEY_ID=your_key AWS_SECRET_ACCESS_KEY=your_secret AWS_REGION=us-east-1 S3_BUCKET_NAME=audic-musicgen
 modal secret create huggingface-token HUGGING_FACE_TOKEN=your_token
 ```
 
-The app automatically uses Modal secrets when available, falling back to .env file for local development.
+## 🎵 Usage Examples
 
-### Option 3: Function Parameters
-For dynamic values, pass them as function parameters:
-
-```python
-@app.function(image=image, gpu=gpu_config)
-def generate_audio_local(
-    prompt: str, 
-    duration: int = 60,
-    model_name: str = "facebook/audiogen-medium"
-):
-    # Use parameters directly
-```
-
-### Option 4: Modal Mounts
-For configuration files:
+### Basic Music Generation
 
 ```python
-config_mount = modal.Mount.from_local_file("config.json", remote_path="/config.json")
+import modal
 
-@app.function(image=image, mounts=[config_mount])
-def generate_audio_local(prompt: str, duration: int = 60):
-    import json
-    with open("/config.json", "r") as f:
-        config = json.load(f)
+# Get the app
+app = modal.App.lookup("audic-musicgen")
+
+# Generate music
+result = app.generate_music.remote(
+    prompt="Upbeat electronic music with synthesizers and drums",
+    duration=30,
+    model_size="large"
+)
 ```
 
-## Model Details
+### Advanced Usage
 
-- **Model**: `facebook/audiogen-medium` (1.5B parameters)
-- **Library**: AudioCraft from Facebook Research
-- **GPU**: A10G for acceleration
-- **Output**: WAV format with configurable duration
-- **Authentication**: Public model (no token required, but optional for better performance)
+```python
+# Generate with melody model
+result = app.generate_music_with_melody.remote(
+    prompt="Jazz fusion with saxophone and piano",
+    melody_prompt="Smooth jazz melody",
+    duration=45,
+    model_size="melody"
+)
+```
 
-## Security Notes
+## 🎛️ Model Options
 
-- The `.env` file is automatically added to `.gitignore`
-- Never commit your AWS credentials to version control
-- Use IAM roles with minimal required permissions
+### Available Models
 
-## Troubleshooting
+- **small**: Fast generation, good for prototyping
+- **medium**: Balanced speed and quality
+- **large**: Best quality, slower generation
+- **melody**: Specialized for melody generation
 
-### CUDA Errors
-The app uses GPU acceleration with A10G. If you encounter issues, check Modal's GPU availability.
+### Model Specifications
 
-### S3 Upload Failures
-- Check your AWS credentials
-- Ensure the S3 bucket exists and is accessible
-- Verify your IAM user has S3 permissions
+- **Small**: 300M parameters, ~10s generation time
+- **Medium**: 1.5B parameters, ~30s generation time  
+- **Large**: 3.3B parameters, ~60s generation time
+- **Melody**: 1.5B parameters, melody-focused
 
-### Timeout Issues
-- Try shorter audio durations (15-30 seconds)
-- Check your internet connection
-- Ensure Modal has enough resources
+## 📊 Output Format
 
-## Support
+Generated music is saved as WAV files and uploaded to S3 with the following structure:
 
-For issues with:
-- **Modal**: Check [Modal documentation](https://modal.com/docs)
-- **AWS**: Check [AWS documentation](https://docs.aws.amazon.com)
-- **AudioGen**: Check [AudioCraft documentation](https://github.com/facebookresearch/audiocraft) 
+```
+s3://your-bucket/musicgen/
+├── {message_deduplication_id}/
+│   ├── musicgen_{id}_{timestamp}.wav
+│   └── musicgen_melody_{id}_{timestamp}.wav
+```
+
+## 🧪 Testing
+
+Run the test script to verify functionality:
+
+```bash
+python3 test_musicgen.py
+```
+
+## 📚 Resources
+
+- **MusicGen**: Check [AudioCraft documentation](https://github.com/facebookresearch/audiocraft)
+- **Modal**: [Modal documentation](https://modal.com/docs)
+- **AudioCraft**: [Facebook Research AudioCraft](https://github.com/facebookresearch/audiocraft) 
