@@ -379,6 +379,38 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
         print(f"❌ Unexpected error: {e}")
         return {"error": str(e)}
 
+@app.web_endpoint(method="POST")
+def generate_music_endpoint(request: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Web endpoint for music generation that can be called via HTTP.
+    
+    Expected request format:
+    {
+        "prompt": "Text description of the music to generate",
+        "duration": 30,
+        "model_size": "large",
+        "message_deduplication_id": "optional-unique-id"
+    }
+    """
+    try:
+        # Extract parameters from request
+        prompt = request.get("prompt")
+        duration = request.get("duration", 30)
+        model_size = request.get("model_size", "large")
+        message_deduplication_id = request.get("message_deduplication_id")
+        
+        # Validate required parameters
+        if not prompt:
+            return {"success": False, "error": "prompt is required"}
+        
+        # Call the generate_music function
+        result = generate_music.remote(prompt, duration, model_size, message_deduplication_id)
+        
+        return result
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @app.function(image=image)
 def simple_test() -> Dict[str, Any]:
     """Simple test function to verify the app is working"""
