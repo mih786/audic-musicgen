@@ -43,6 +43,7 @@ def validate_environment():
 model_cache = modal.Volume.from_name("model-cache", create_if_missing=True)
 
 @app.function(image=image, gpu="A10G", timeout=600, volumes={"/cache_volume": model_cache}, secrets=[modal.Secret.from_name("aws-credentials"), modal.Secret.from_name("huggingface-token")])
+@modal.fastapi_endpoint()
 def generate_music(prompt: str, duration: int = 30, model_size: str = "large", message_deduplication_id: str = None) -> Dict[str, Any]:
     """
     Generate music using MusicGen model
