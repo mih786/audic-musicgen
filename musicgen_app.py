@@ -379,7 +379,7 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
         print(f"❌ Unexpected error: {e}")
         return {"error": str(e)}
 
-@app.web_endpoint(method="POST")
+@app.function(image=image, gpu="A10G", timeout=600, volumes={"/cache_volume": model_cache}, secrets=[modal.Secret.from_name("aws-credentials"), modal.Secret.from_name("huggingface-token")], web=True)
 def generate_music_endpoint(request: Dict[str, Any]) -> Dict[str, Any]:
     """
     Web endpoint for music generation that can be called via HTTP.
