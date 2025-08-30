@@ -24,7 +24,7 @@ image = modal.Image.from_registry("python:3.11-slim").apt_install("git", "gcc", 
 
 def validate_environment():
     """Validate required environment variables"""
-    required_vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'S3_BUCKET_NAME']
+    required_vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'S3_BUCKET_NAME_MUSIC']
     missing_vars = []
     
     for var in required_vars:
@@ -159,13 +159,13 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large", m
                 region_name=os.getenv('AWS_REGION', 'us-east-1')
             )
             
-            bucket_name = os.getenv('S3_BUCKET_NAME', 'audic-musicgen')
+            bucket_name = os.getenv('S3_BUCKET_NAME_MUSIC', 'audic-musicgen')
             
             # Organize S3 structure with message_deduplication_id
             if message_deduplication_id:
-                s3_key = f"musicgen/{message_deduplication_id}/{wav_filename}"
+                s3_key = f"musicgen_{message_deduplication_id}_{wav_filename}"
             else:
-                s3_key = f"audio/{wav_filename}"
+                s3_key = f"audio_{wav_filename}"
             
             s3_client.upload_file(wav_filename, bucket_name, s3_key)
             
@@ -327,13 +327,13 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
                 region_name=os.getenv('AWS_REGION', 'us-east-1')
             )
             
-            bucket_name = os.getenv('S3_BUCKET_NAME', 'audic-musicgen')
+            bucket_name = os.getenv('S3_BUCKET_NAME_MUSIC', 'audic-musicgen')
             
             # Organize S3 structure with message_deduplication_id
             if message_deduplication_id:
-                s3_key = f"musicgen/{message_deduplication_id}/{wav_filename}"
+                s3_key = f"musicgen_{message_deduplication_id}_{wav_filename}"
             else:
-                s3_key = f"audio/{wav_filename}"
+                s3_key = f"audio_{wav_filename}"
             
             s3_client.upload_file(wav_filename, bucket_name, s3_key)
             
