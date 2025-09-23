@@ -159,7 +159,7 @@ def generate_music(prompt: str, duration: int = 30, model_size: str = "large", m
                 region_name=os.getenv('AWS_REGION', 'us-east-1')
             )
             
-            bucket_name = os.getenv('S3_BUCKET_NAME_MUSIC', 'audic-musicgen')
+            bucket_name = os.getenv('S3_BUCKET_NAME_MUSIC', 'audic-sfx')
             
             # Organize S3 structure with message_deduplication_id
             if message_deduplication_id:
@@ -327,7 +327,7 @@ def generate_music_with_melody(prompt: str, melody_path: str, duration: int = 30
                 region_name=os.getenv('AWS_REGION', 'us-east-1')
             )
             
-            bucket_name = os.getenv('S3_BUCKET_NAME_MUSIC', 'audic-musicgen')
+            bucket_name = os.getenv('S3_BUCKET_NAME_MUSIC', 'audic-sfx')
             
             # Organize S3 structure with message_deduplication_id
             if message_deduplication_id:
